@@ -1,0 +1,17 @@
+from dataclasses import dataclass
+from datetime import datetime
+
+
+@dataclass
+class OrderFSM:
+    user_id: int
+    user_name: str
+    type_property: str = ""
+    budget: int = 0
+    district: str = ""
+    specifications: str = ""
+    contacts: str = ""
+    name: str = ""
+
+    created: datetime = datetime.now()  # Время создания заявки
+    updated: datetime = datetime.now()  # Последнее обновление заявки
