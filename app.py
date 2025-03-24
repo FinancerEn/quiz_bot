@@ -1,6 +1,7 @@
 # Импорты Питона.
 import asyncio
 import os
+from typing import Optional
 
 # Импорты фреймворка.
 from aiogram import Bot, Dispatcher
@@ -12,6 +13,7 @@ from dotenv import load_dotenv
 
 # Подключаем наш кастомный файл взаимодействия с пользователем.
 from handlers.user_private import user_private_router
+from handlers.chat_info import chat_info_router
 
 
 load_dotenv()
@@ -24,12 +26,17 @@ TOKEN = os.getenv("TOKEN")
 if not TOKEN:
     raise ValueError("Переменная окружения 'TOKEN' не задана.")
 
+GROUP_ID_ENV = os.getenv("GROUP_ID")
+GROUP_ID: Optional[int] = (
+    int(GROUP_ID_ENV) if GROUP_ID_ENV and GROUP_ID_ENV.isdigit() else None
+)
+
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-
 # Подключение маршрутов
 dp.include_router(user_private_router)
+dp.include_router(chat_info_router)
 
 
 async def on_shutdown(bot):

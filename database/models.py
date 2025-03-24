@@ -6,10 +6,12 @@ from datetime import datetime
 class OrderFSM:
     user_id: int
     user_name: str
+    start: str = ""
     type_property: str = ""
     budget: int = 0
     district: str = ""
     specifications: str = ""
+    custom_specification: str = ""
     contacts: str = ""
     name: str = ""
 
