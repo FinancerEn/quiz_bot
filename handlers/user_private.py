@@ -107,7 +107,7 @@ async def handle_start_test(callback: CallbackQuery, state: FSMContext):
         await state.update_data(start=user_choice)
         await state.set_state(UserState.type_property)
 
-        await callback.message.edit_text(
+        await callback.message.answer(
             text.text_type_of_property, reply_markup=inline.inline_type_of_property
         )
         await callback.answer()
@@ -303,7 +303,8 @@ async def handler_back(callback: CallbackQuery, state: FSMContext):
 # Хендлер блока "не интересно"
 @user_private_router.callback_query(F.data.startswith('not_interesting'))
 async def handler_nit_interesting(callback: CallbackQuery, state: FSMContext):
-    if not callback.data:
+    if not callback.data or not callback.from_user:
+        await callback.answer('Произошла ошибка ❌')
         return
 
     user_data = await state.get_data()
