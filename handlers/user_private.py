@@ -275,8 +275,15 @@ async def handler_custom_specification_contacts(message: Message, state: FSMCont
         await message.bot.send_message(GROUP_ID_ENV, order_info, parse_mode="Markdown")
 
     # Отправляем подтверждение пользователю
-    await message.answer('Спасибо! Наш менеджер скоро свяжется с тобой. А пока можешь посмотреть наши лучшие предложения!',
-                         reply_markup=inline.inline_final)
+    await message.answer("""Спасибо! Наш менеджер скоро свяжется с тобой. А пока можешь посмотреть наши лучшие предложения!
+    Выберите действие:
+
+📜 Посмотреть каталог – получите ссылку на наш каталог с актуальными предложениями.
+🔔 Подписаться на обновления – не пропускайте новинки и важные новости.
+🆘 Задать вопрос – напишите нам в личные сообщения, и мы поможем вам.
+
+Выберите нужный пункт 👇
+""", reply_markup=inline.inline_final)
 
     # Очищаем состояние после оформления заказа
     await state.clear()
@@ -291,3 +298,42 @@ async def handler_back(callback: CallbackQuery, state: FSMContext):
             text.text_type_of_property, reply_markup=inline.inline_type_of_property
         )
         await callback.answer()
+
+
+# Хендлер блока "не интересно"
+@user_private_router.callback_query(F.data.startswith('not_interesting'))
+async def handler_nit_interesting(callback: CallbackQuery, state: FSMContext):
+    if not callback.data:
+        return
+
+    user_data = await state.get_data()
+    if isinstance(callback.message, Message):
+        # Преобразуем данные в удобочитаемый формат
+        start = user_data.get("start", "❌ «Не интересно»")
+
+        # Заполняем данные о заказе
+        order = OrderFSM(
+            user_id=callback.from_user.id if callback.from_user else 0,
+            user_name=callback.from_user.full_name if callback.from_user else "Аноним",
+            start=start
+        )
+
+        order_info = (
+            f"🛒 *Пользователь отказался проходить тест в quiz боте!*\n"
+            f"👤 Имя: {order.user_name}\n"
+            f"👤 start: {order.start}\n"
+        )
+
+        if GROUP_ID_ENV and callback.bot:
+            await callback.bot.send_message(GROUP_ID_ENV, order_info, parse_mode="Markdown")
+
+        await state.update_data(start=user_data)
+        await callback.message.answer('''
+            📜 Посмотреть каталог – получите ссылку на наш каталог с актуальными предложениями.
+            🔔 Подписаться на обновления – не пропускайте новинки и важные новости.
+            🆘 Задать вопрос – напишите нам в личные сообщения, и мы поможем вам.
+
+            Выберите нужный пункт 👇
+            ''', reply_markup=inline.inline_final)
+
+        await state.clear()

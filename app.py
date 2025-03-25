@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 # Подключаем наш кастомный файл взаимодействия с пользователем.
 from handlers.user_private import user_private_router
 from handlers.chat_info import chat_info_router
+from handlers.dop_user_private import dop_user_private_router
 
 
 load_dotenv()
@@ -37,6 +38,7 @@ dp = Dispatcher()
 # Подключение маршрутов
 dp.include_router(user_private_router)
 dp.include_router(chat_info_router)
+dp.include_router(dop_user_private_router)
 
 
 async def on_shutdown(bot):

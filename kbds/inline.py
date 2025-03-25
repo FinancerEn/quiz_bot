@@ -18,6 +18,10 @@ class SpecificationsCallback(CallbackData, prefix="specifications_"):
     name: str
 
 
+class FinalCallback(CallbackData, prefix="final_"):
+    name: str
+
+
 inline_keyboard_main = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text="✅ «Пройти тест»", callback_data="take_test")],
@@ -72,9 +76,9 @@ inline_specifications = InlineKeyboardMarkup(
 
 inline_final = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text="📜 Посмотреть каталог", callback_data="final_")],
-        [InlineKeyboardButton(text="🔔 Подписаться на обновления", callback_data="final_")],
-        [InlineKeyboardButton(text="🆘 Задать вопрос", callback_data="final_")],
+        [InlineKeyboardButton(text="📜 Посмотреть каталог", callback_data="final_catalog")],
+        [InlineKeyboardButton(text="🔔 Подписаться на обновления", callback_data="final_updates")],
+        [InlineKeyboardButton(text="🆘 Задать вопрос", callback_data="final_question")],
     ],
 )
 
