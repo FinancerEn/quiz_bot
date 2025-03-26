@@ -87,3 +87,9 @@ inline_keyboard_back = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="🔙 Назад к началу теста", callback_data="back_")],
     ]
 )
+
+inline_keyboard_present = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text="«🎁 Забрать подарок»", callback_data="present_")],
+    ]
+)

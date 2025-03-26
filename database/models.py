@@ -13,6 +13,7 @@ class OrderFSM:
     specifications: str = ""
     custom_specification: str = ""
     contacts: str = ""
+    present: str = ""
     name: str = ""
 
     created: datetime = datetime.now()  # Время создания заявки

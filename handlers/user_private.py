@@ -21,7 +21,7 @@ from kbds import inline
 
 load_dotenv()
 
-GROUP_ID_ENV = os.getenv("GROUP_ID")
+GROUP_ID_ENV = os.getenv('GROUP_ID')
 GROUP_ID: Optional[int] = (
     int(GROUP_ID_ENV) if GROUP_ID_ENV and GROUP_ID_ENV.isdigit() else None
 )
@@ -38,6 +38,7 @@ class UserState(StatesGroup):
     specifications = State()  # Характеристики
     custom_specification = State()  # Свой вариант
     contacts = State()  # Контакты
+    present = State()  # Приз
     name = State()  # Имя
 
 
@@ -215,14 +216,24 @@ async def handler_your_version(message: Message, state: FSMContext):
     )
 
 
-@user_private_router.message(UserState.contacts, F.text)
+@user_private_router.callback_query(F.data.startswith('present_'))
+async def handler_present(callback: CallbackQuery, state: FSMContext):
+    type_present = callback.data
+    await state.update_data(present=type_present)
+    await state.set_state(UserState.present)
+    await callback.message.answer('«🎁 Сюрприз для вас! (нажатие открывает сюрприз)',
+                                  reply_markup=inline.inline_keyboard_present
+                                  )
+
+
+@user_private_router.message(UserState.present, F.text)
 async def handler_custom_specification_contacts(message: Message, state: FSMContext):
-    """Обрабатывает ввод контактов и завершает оформление заказа"""
+    '''Обрабатывает ввод контактов и завершает оформление заказа'''
 
     # Получаем текущее состояние пользователя
     current_state = await state.get_state()
 
-    # Если пользователь вводил свой вариант, сохраняем его, иначе только контакт
+    # Если пользователь вводил свой вариант, сохраняем его, иначе только Приз
     if current_state == "UserState:custom_specification":
         await state.update_data(custom_specification=message.text)
     else:
@@ -238,12 +249,13 @@ async def handler_custom_specification_contacts(message: Message, state: FSMCont
     budget = user_data.get("budget", "Не указано")
     district = user_data.get("district", "Не указано")
     specifications = ", ".join(user_data.get("selected_specifications", []))
-    custom_specification = user_data.get("custom_specification", "")  # Теперь не затирается!
-    contacts = user_data.get("contacts", "")
+    custom_specification = user_data.get("custom_specification", '')  # Теперь не затирается!
+    contacts = user_data.get("contacts", '')
+    present = user_data.get("present", "Нет приза")
 
     # Если пользователь не вводил свой вариант, оставляем поле пустым
     if "custom_specification" not in user_data:
-        custom_specification = ""
+        custom_specification = ''
 
     # Заполняем данные о заказе
     order = OrderFSM(
@@ -255,7 +267,8 @@ async def handler_custom_specification_contacts(message: Message, state: FSMCont
         district=district,
         specifications=specifications,
         custom_specification=custom_specification,
-        contacts=contacts
+        contacts=contacts,
+        present=present
     )
 
     order_info = (
@@ -268,6 +281,7 @@ async def handler_custom_specification_contacts(message: Message, state: FSMCont
         f"📌 Характеристики: {order.specifications}\n"
         f"✍️ Свой вариант: {order.custom_specification if order.custom_specification else '—'}\n"
         f"📞 Контакты: {order.contacts}\n"
+        f"🎁 Приз: {order.present}\n"
         f"🔗 ID пользователя: {order.user_id}"
     )
 
@@ -275,15 +289,16 @@ async def handler_custom_specification_contacts(message: Message, state: FSMCont
         await message.bot.send_message(GROUP_ID_ENV, order_info, parse_mode="Markdown")
 
     # Отправляем подтверждение пользователю
-    await message.answer("""Спасибо! Наш менеджер скоро свяжется с тобой. А пока можешь посмотреть наши лучшие предложения!
+    await message.answer('''Спасибо! Наш менеджер скоро свяжется с тобой. А пока можешь посмотреть наши лучшие предложения!
     Выберите действие:
 
 📜 Посмотреть каталог – получите ссылку на наш каталог с актуальными предложениями.
 🔔 Подписаться на обновления – не пропускайте новинки и важные новости.
 🆘 Задать вопрос – напишите нам в личные сообщения, и мы поможем вам.
+🎁 Сюрприз для вас! (нажатие открывает сюрприз)
 
 Выберите нужный пункт 👇
-""", reply_markup=inline.inline_final)
+''', reply_markup=inline.inline_final)
 
     # Очищаем состояние после оформления заказа
     await state.clear()
@@ -338,3 +353,39 @@ async def handler_nit_interesting(callback: CallbackQuery, state: FSMContext):
             ''', reply_markup=inline.inline_final)
 
         await state.clear()
+
+
+# # Кнопка приз
+# @user_private_router.callback_query(F.data.startswith('present_'))
+# async def handler_present(callback: CallbackQuery, state: FSMContext):
+#     if not callback.data or not callback.from_user:
+#         await callback.answer('Произошла ошибка ❌')
+#         return
+
+#     user_data = await state.get_data()
+#     if isinstance(callback.message, Message):
+#         # Преобразуем данные в удобочитаемый формат
+#         present = user_data.get("present", "Получил(а) промокод на 10%")
+
+#         # Заполняем данные о заказе
+#         order = OrderFSM(
+#             user_id=callback.from_user.id if callback.from_user else 0,
+#             user_name=callback.from_user.full_name if callback.from_user else "Аноним",
+#             present=present
+#         )
+
+#         order_info = (
+#             f"🛒 *Пользователь прошёл тест quiz боте и просит подарок!*\n"
+#             f"👤 Имя: {order.user_name}\n"
+#             f"👤 Подарок: {order.present}\n"
+#         )
+
+#         if GROUP_ID_ENV and callback.bot:
+#             await callback.bot.send_message(GROUP_ID_ENV, order_info, parse_mode="Markdown")
+
+#         await state.update_data(start=user_data)
+#         await callback.message.answer('''
+#             «🎁 Сюрприз для вас! (нажатие открывает сюрприз)
+#             ''', reply_markup=inline.inline_keyboard_present)
+
+#         await state.clear()
